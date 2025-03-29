@@ -1,105 +1,196 @@
 package controllers
 
 import (
+	"database/sql"
 	"net/http"
-	"slices"
 	"strconv"
-	"time"
 
 	"github.com/Vann06/Ej_Api/pkg/models"
 	"github.com/gin-gonic/gin"
 )
 
-var incidents = []models.Incident{}
+type IncidentController struct {
+	Db *sql.DB
+}
 
-// POST - crear incidentes
-func CreateIncident(c *gin.Context) {
+func NewIncidentController(db *sql.DB) *IncidentController {
+	return &IncidentController{Db: db}
+}
+
+// esto es para el POST
+func (ic *IncidentController) CreateIncident(c *gin.Context) {
 	var newIncident models.Incident
 
-	if err := c.BindJSON(&newIncident); err != nil {
+	if err := c.ShouldBindJSON(&newIncident); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
 	}
 
+	// Validaciones de negocio
 	if len(newIncident.Description) < 10 || newIncident.Reporter == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Campos incompletos"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Campos incompletos o inválidos"})
 		return
 	}
 
-	newIncident.ID = len(incidents) + 1
-	newIncident.Status = "pendiente"
-	newIncident.CreatedAt = time.Now()
+	// Insertar en la base de datos
+	result, err := ic.Db.Exec(`
+		INSERT INTO ticket (reporter, description, status)
+		VALUES (?, ?, ?)`,
+		newIncident.Reporter, newIncident.Description, newIncident.Status,
+	)
 
-	incidents = append(incidents, newIncident)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al insertar en la base de datos"})
+		return
+	}
 
-	c.IndentedJSON(http.StatusCreated, newIncident)
+	insertedID, _ := result.LastInsertId()
+	newIncident.ID = int(insertedID)
+	//newIncident.Status = newIncident.Status
+	//newIncident.CreatedAt = time // puedes también hacer un SELECT si quieres el valor real
+
+	c.JSON(http.StatusCreated, newIncident)
 }
 
-// GET - lista de incidentes
-func GetIncidents(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, incidents)
-}
+// esto es para el GET de todos los incidentes
+func (ic *IncidentController) GetIncidents(c *gin.Context) {
+	rows, err := ic.Db.Query("SELECT id, reporter, description, status, created_at FROM ticket")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al consultar la base de datos"})
+		return
+	}
+	defer rows.Close()
 
-// GET - incidente por ID
-func GetIncidentByID(c *gin.Context) {
-	id := c.Param("id")
+	var incidents []models.Incident
 
-	// loop para buscar por ID
-	for _, incident := range incidents {
-		if strconv.Itoa(incident.ID) == id{
-			c.JSON(http.StatusOK, incident)
+	for rows.Next() {
+		var inc models.Incident
+		err := rows.Scan(&inc.ID, &inc.Reporter, &inc.Description, &inc.Status, &inc.CreatedAt)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al leer datos"})
 			return
 		}
+		incidents = append(incidents, inc)
 	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "Incident not found"})
 
+	c.JSON(http.StatusOK, incidents)
 }
 
-// PUT incidentes - actualizar el estado 
-func UpdateIncidents(c *gin.Context){
+// esto es para el GET con ID
+func (ic *IncidentController) GetIncidentByID(c *gin.Context) {
+	idParam := c.Param("id")
 
-	id := c.Param("id")
-	
-	// recibir el campo modificable de status
+	// Convertir string a int
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	var incident models.Incident
+
+	// Consulta a la base de datos
+	err = ic.Db.QueryRow(`
+		SELECT id, reporter, description, status, created_at
+		FROM ticket
+		WHERE id = ?
+	`, id).Scan(&incident.ID, &incident.Reporter, &incident.Description, &incident.Status, &incident.CreatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Incidente no encontrado"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al consultar la base de datos"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, incident)
+}
+
+// esto es para PUT
+
+func (ic *IncidentController) UpdateIncidentStatus(c *gin.Context) {
+	idParam := c.Param("id")
+
+	// Convertir el ID a int
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	// Estructura para recibir el campo "status"
 	var input struct {
 		Status string `json:"status"`
 	}
 
-	statusValidos := map[string]bool{
-		"pendiente": true,
-		"en proceso": true,
-		"resuelto": true,
-	}
-
-	// Si el input no cuenta como estatus 
-	if !statusValidos[input.Status] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado no valido"})
+	// Validar el body JSON
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
 	}
 
-	for i, incident := range incidents {
-		if strconv.Itoa(incident.ID) == id{
-			incidents[i].Status = input.Status
-			c.JSON(http.StatusOK, gin.H{"message": "Estado actualizado"})
-			return
-		}
+	// Validar si el status es uno permitido
+	validStatus := map[string]bool{
+		"pendiente":  true,
+		"en proceso": true,
+		"resuelto":   true,
 	}
-	// si no lo encontro 
-	c.JSON(http.StatusNotFound,  gin.H{"error": "Incidente no encontrado"})
 
+	if !validStatus[input.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado no válido"})
+		return
+	}
+
+	// Ejecutar UPDATE
+	result, err := ic.Db.Exec(`
+		UPDATE ticket
+		SET status = ?
+		WHERE id = ?
+	`, input.Status, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar incidente"})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Incidente no encontrado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Estado actualizado correctamente"})
 }
 
-// DELETE eliminar incidentes 
-func DeleteIncidents(c *gin.Context){
-	
-	id := c.Param("id")
+// esto es para DELETE
+func (ic *IncidentController) DeleteIncident(c *gin.Context) {
+	idParam := c.Param("id")
 
-	for i, incident := range incidents {
-		if strconv.Itoa(incident.ID) == id{
-			// corta y junta los incidentes eliminando el que se desea
-			incidents = slices.Delete(incidents, i, i+1)
-			c.JSON(http.StatusOK, gin.H{"message": "Incidente eliminado"})
-			return
-		}
+	// Convertir ID a int
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
 	}
-	c.JSON(http.StatusNotFound,  gin.H{"error": "Incidente no encontrado"})
+
+	// Ejecutar DELETE en la base de datos
+	result, err := ic.Db.Exec(`
+		DELETE FROM ticket
+		WHERE id = ?
+	`, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al eliminar incidente"})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Incidente no encontrado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Incidente eliminado correctamente"})
 }
