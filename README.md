@@ -1,6 +1,6 @@
 # 📋 Incidents API
 
-Esta es una API REST desarrollada en **Go** usando el framework **Gin**, que permite crear, consultar, actualizar y eliminar reportes de incidentes.
+Esta es una API REST desarrollada en **Go** usando el framework **Gin**, que permite crear, consultar, actualizar y eliminar reportes de incidentes en una empresa (como computadoras, impresoras, redes, etc.).
 
 ---
 
@@ -18,7 +18,30 @@ Esta es una API REST desarrollada en **Go** usando el framework **Gin**, que per
 
 - [Go](https://golang.org/) 1.24+
 - [Gin](https://github.com/gin-gonic/gin) como framework web
-- (Próximamente: MySQL como base de datos)
+- [MySQL](https://www.mysql.com/) como base de datos relacional
+
+---
+
+## 📁 Estructura del proyecto
+
+```
+EJ_API/
+├── cmd/
+│   └── main/
+│       └── main.go
+├── db/
+│   └── db.go
+├── pkg/
+│   ├── controllers/
+│   │   └── incident-controller.go
+│   ├── models/
+│   │   └── incident.go
+│   └── routes/
+│       └── incidents-routes.go
+├── go.mod
+├── go.sum
+└── README.md
+```
 
 ---
 
@@ -26,24 +49,40 @@ Esta es una API REST desarrollada en **Go** usando el framework **Gin**, que per
 
 ### 1. Clona el repositorio
 
-\`\`\`bash
+```bash
 git clone https://github.com/Vann06/Ej_Api.git
 cd Ej_Api
-\`\`\`
+```
 
-### 2. Inicializa el proyecto de Go
+### 2. Instala dependencias de Go
 
-\`\`\`bash
+```bash
 go mod tidy
-\`\`\`
+```
 
-### 3. Ejecuta la API
+### 3. Crea la base de datos MySQL
 
-\`\`\`bash
+```sql
+CREATE DATABASE incidentes;
+
+USE incidentes;
+
+CREATE TABLE ticket (
+  id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+  reporter VARCHAR(100) NOT NULL,
+  description VARCHAR(250) NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+```
+
+### 4. Ejecuta la API
+
+```bash
 go run cmd/main/main.go
-\`\`\`
+```
 
-La API se ejecutará en:  
+Servidor disponible en:  
 📍 \`http://localhost:8080\`
 
 ---
@@ -65,20 +104,21 @@ La API se ejecutará en:
 ### Método: \`POST /incidents\`  
 Body JSON:
 
-\`\`\`json
+```json
 {
   "reporter": "Zeyda",
   "description": "Mi laptop no enciende"
 }
-\`\`\`
+```
 
 ---
 
-## 📌 Notas
+## 📌 Reglas de negocio
 
-- Por ahora, los incidentes se guardan en memoria (slice).
-- La conexión con base de datos MySQL se agregará más adelante.
-- Código modular con carpetas: \`models/\`, \`controllers/\`, \`routes/\`.
+- \`reporter\` es obligatorio  
+- \`description\` debe tener al menos 10 caracteres  
+- Solo puede actualizarse el campo \`status\` (PUT)  
+- Si un incidente no existe, se devuelve error 404  
 
 ---
 
@@ -86,52 +126,47 @@ Body JSON:
 
 ### 🔹 Windows
 
-1. Ve a la página oficial: https://go.dev/dl/
-2. Descarga el instalador para Windows (\`.msi\`) según tu sistema (64-bit usualmente).
-3. Ejecuta el instalador y sigue los pasos.
-4. Reinicia tu terminal y escribe:
+1. Ve a: https://go.dev/dl/
+2. Descarga el instalador \`.msi\` (Windows 64-bit recomendado)
+3. Instálalo como cualquier programa
+4. Verifica en terminal:
 
-\`\`\`bash
+```bash
 go version
-\`\`\`
+```
 
-✅ Deberías ver algo como: \`go version go1.24.1 windows/amd64\`
+✅ Resultado esperado: \`go version go1.24.1 windows/amd64\`
 
 ---
 
-### 🔹 macOS (usando Homebrew)
+### 🔹 macOS (Homebrew)
 
-\`\`\`bash
+```bash
 brew install go
-\`\`\`
-
-Verifica con:
-
-\`\`\`bash
 go version
-\`\`\`
+```
 
 ---
 
 ### 🔹 Linux (Debian/Ubuntu)
 
-\`\`\`bash
+```bash
 sudo apt update
 sudo apt install golang-go
-\`\`\`
-
-Verifica con:
-
-\`\`\`bash
 go version
-\`\`\`
+```
 
 ---
 
+### Verifica tu entorno:
 
-Puedes verificar con:
-
-\`\`\`bash
+```bash
 go env
-\`\`\`
-EOF
+```
+
+---
+
+## 👩‍💻 Autor
+
+Vianka Castro ✨  
+
