@@ -46,9 +46,6 @@ func (ic *IncidentController) CreateIncident(c *gin.Context) {
 
 	insertedID, _ := result.LastInsertId()
 	newIncident.ID = int(insertedID)
-	//newIncident.Status = newIncident.Status
-	//newIncident.CreatedAt = time // puedes también hacer un SELECT si quieres el valor real
-
 	c.JSON(http.StatusCreated, newIncident)
 }
 
