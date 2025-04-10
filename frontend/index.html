@@ -20,10 +20,12 @@
             <button onclick="showSection('delete')">DELETE - Eliminar</button>
         </div>
 
-        <!-- Secciones para cada Metodo -->
+        <!------------------Secciones para cada Metodo----------------->
+
+        <!-- Seccion para crear un incidente con POST -->
         <div id="post" class="section hidden">
             <h2>POST - Crear incidente</h2>
-            <p>Crea un nuevo incidente enviando reportero, descripción y
+            <p>Crear un nuevo incidente enviando reportero, descripción y
                 si desea el estado.</p>
 
             <label for="reporter">Nombre del Reportero: </label>
@@ -43,29 +45,55 @@
             <div id="post-result" style="margin-top: 15px;"></div>
         </div>
 
+        <!-- Seccion para traer todos con GET  -->
         <div id="get" class="section hidden">
             <h2>GET - Listar todos los incidentes</h2>
             <p>Obtiene la lista completa de incidentes registrados.</p>
             <div id="incident-list" class="incident-list"> </div>
         </div>
 
+        <!-- Seccion para traer uno GET con su ID  -->
         <div id="getById" class="section hidden">
             <h2>GET - Buscar incidente por ID</h2>
             <p>Obtiene los detalles de un incidente específico según su ID.</p>
             <input type ="number" id="incident-id" placeholder="Ingrese el ID del incidente..."/>
-            <button onClick="fetchIncidentID()">Buscar</button>
+            <button onClick="fetchIncidentID('incident-id','incident-found')">Buscar</button>
             <div id="incident-found" class="incident-card" style style="margin-top: 15px;"></div>
         </div>
 
+        <!-- Seccion para actualizar uno con PUT -->
         <div id="put" class="section hidden">
             <h2>PUT - Actualizar estado</h2>
             <p>Permite cambiar el estado de un incidente a: pendiente, en
                 proceso o resuelto.</p>
+
+            <input type="number" id="incident-id-put" placeholder="Ingrese el ID del incidente a editar"/>
+
+            <label for="status">Estado</label>
+            <select id="status-put">
+                <option value=""> Seleccione el nuevo estado </option>
+                <option value="pendiente">Pendiente</option>
+                <option value="en proceso">En Proceso</option>
+                <option value="resuelto">Resuelto</option>
+            </select>
+
+            <button onClick="editIncidentID()">Buscar</button>
+
+            <div id="put-result" style="margin-top: 15px;"></div>
+
         </div>
 
+        <!-- Seccion para eliminar un incidente con PUT -->
         <div id="delete" class="section hidden">
             <h2>DELETE - Eliminar incidente</h2>
             <p>Elimina un incidente reportado por error.</p>
+
+            <input type="number" id="incident-id-del" placeholder="Ingrese el ID del incidente a editar"/>
+            <button onClick="fetchIncidentID('incident-id-del','incident-found-del')">Buscar</button>
+            <div id="incident-found-del" class="incident-card"></div>
+            <button onclick="deleteIncident()" style=" background-color: rgb(211, 48, 48);"> ELIMINAR </button>
+            <div id="del-result" style="margin-top: 15px;"></div>
+
         </div>
 
         <script src="script.js"></script>
