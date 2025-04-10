@@ -9,6 +9,8 @@ import (
 func main() {
 	r := gin.Default()
 
+	r.Static("/frontend", "./frontend")
+
 	// Conexión a la base de datos
 	connection := db.ConnectDB()
 

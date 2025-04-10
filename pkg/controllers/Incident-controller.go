@@ -26,9 +26,25 @@ func (ic *IncidentController) CreateIncident(c *gin.Context) {
 		return
 	}
 
-	// Validaciones de negocio
+	// Validación de campos obligatorios
 	if len(newIncident.Description) < 10 || newIncident.Reporter == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Campos incompletos o inválidos"})
+		return
+	}
+
+	// Si no se envía un status, se asigna "pendiente"
+	if newIncident.Status == "" {
+		newIncident.Status = "pendiente"
+	}
+
+	// Validar si el status es uno permitido
+	validStatus := map[string]bool{
+		"pendiente":  true,
+		"en proceso": true,
+		"resuelto":   true,
+	}
+	if !validStatus[newIncident.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado no válido"})
 		return
 	}
 
@@ -51,7 +67,9 @@ func (ic *IncidentController) CreateIncident(c *gin.Context) {
 
 // esto es para el GET de todos los incidentes
 func (ic *IncidentController) GetIncidents(c *gin.Context) {
+
 	rows, err := ic.Db.Query("SELECT id, reporter, description, status, created_at FROM ticket")
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al consultar la base de datos"})
 		return

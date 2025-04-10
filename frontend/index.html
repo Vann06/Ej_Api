@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Gestión de Incidentes</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1> Gestión de Incidentes</h1>
+
+        <!-- Contenedor para los botones de opciones-->
+        <div class="button-container">
+            <button onclick="showSection('post')">POST - Crear</button>
+            <button onclick="showSection('get')">GET - Listar</button>
+            <button onclick="showSection('getById')">GET - Buscar por
+                ID</button>
+            <button onclick="showSection('put')">PUT - Actualizar
+                estado</button>
+            <button onclick="showSection('delete')">DELETE - Eliminar</button>
+        </div>
+
+        <!-- Secciones para cada Metodo -->
+        <div id="post" class="section hidden">
+            <h2>POST - Crear incidente</h2>
+            <p>Crea un nuevo incidente enviando reportero, descripción y
+                si desea el estado.</p>
+
+            <label for="reporter">Nombre del Reportero: </label>
+            <input type ="text" id="reporter"/>
+            <label for="description">Descripción del reporte</label>
+            <input type ="text" id="description"/>
+
+            <label for="status">Estado</label>
+            <select id="status">
+                <option value=""> Seleccione un estado (opcional) </option>
+                <option value="pendiente">Pendiente</option>
+                <option value="en proceso">En Proceso</option>
+                <option value="resuelto">Resuelto</option>
+            </select>
+
+            <button onclick="createIncident()">Crear Incidente</button>
+            <div id="post-result" style="margin-top: 15px;"></div>
+        </div>
+
+        <div id="get" class="section hidden">
+            <h2>GET - Listar todos los incidentes</h2>
+            <p>Obtiene la lista completa de incidentes registrados.</p>
+            <div id="incident-list" class="incident-list"> </div>
+        </div>
+
+        <div id="getById" class="section hidden">
+            <h2>GET - Buscar incidente por ID</h2>
+            <p>Obtiene los detalles de un incidente específico según su ID.</p>
+            <input type ="number" id="incident-id" placeholder="Ingrese el ID del incidente..."/>
+            <button onClick="fetchIncidentID()">Buscar</button>
+            <div id="incident-found" class="incident-card" style style="margin-top: 15px;"></div>
+        </div>
+
+        <div id="put" class="section hidden">
+            <h2>PUT - Actualizar estado</h2>
+            <p>Permite cambiar el estado de un incidente a: pendiente, en
+                proceso o resuelto.</p>
+        </div>
+
+        <div id="delete" class="section hidden">
+            <h2>DELETE - Eliminar incidente</h2>
+            <p>Elimina un incidente reportado por error.</p>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
