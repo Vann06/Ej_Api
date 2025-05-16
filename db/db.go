@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func ConnectDB() *sql.DB {
-	// Colocar aqui direccion de tu base de datos 
+	// Colocar aqui direccion de tu base de datos
 	dsn := "Vann:Chapi2019@tcp(127.0.0.1:3306)/incidentes"
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -19,7 +20,7 @@ func ConnectDB() *sql.DB {
 	if err != nil {
 		log.Fatal("No se pudo conectar a la base de datos:", err)
 	}
-	
+
 	fmt.Println("✅ Conectado a la base de datos MySQL")
 	return db
 }
